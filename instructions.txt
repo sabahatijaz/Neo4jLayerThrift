@@ -1,0 +1,4 @@
+This code contains latest TNode Trelation and TGraph structures implemented. 
+And the functions with -1 comment are implemented and tested properly. 
+Retrieve is in Tnode and Trelation and Tgraph format.
+client is modified for uploading data on neo4j server. Just call Ebay CategoryIDs-Motors Hierarchy and Ebay CategoryIDs-US Hierarchy files in client to upload data.

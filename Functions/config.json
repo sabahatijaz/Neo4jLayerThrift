@@ -1,0 +1,10 @@
+{
+    "neo4j":{
+        "host":"116.58.56.42",
+        "scheme":"neo4j",
+        "port" : 7687,
+        "user":"neo4j",
+        "password":"Fa@12345"
+    }
+
+}
