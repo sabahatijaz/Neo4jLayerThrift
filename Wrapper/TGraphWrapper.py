@@ -110,6 +110,7 @@ class Neo4jGraph:
             r = self.__relation.retrieve_by_id(rid)
             rel += r
         _graph = to_graph(rel, properties)
+        _graph.ScratchPad["CQL"]=q
         _graph.ID = str(response[0]['g'].id)
         self.graph = _graph
         return _graph
@@ -133,14 +134,19 @@ class Neo4jGraph:
             _graph = to_graph(rel, properties)
             _graph.Neo4jID = str(graph['g'].id)
             _graph.SubjectSpecializationOf = set(graph['g'].labels)
+            _graph.ScratchPad["CQL"] = query
             list_of_graphs.append(_graph)
         # self.graph = _graph
         #print(type(list_of_graphs))
         return list_of_graphs
 
     def retrieve_by_AnySubjectSpecializationOf(self, criteria, limit):
-        query = "match (g:{0})".format(criteria)
-        query += "where g.nodetype='Graph' return g LIMIT {0} ".format(limit)
+        if limit==-1:
+            query = "match (g:{0})".format(criteria)
+            query += "where g.nodetype='Graph' return g"
+        else:
+            query = "match (g:{0})".format(criteria)
+            query += "where g.nodetype='Graph' return g LIMIT {0} ".format(limit)
         response = self.db.retrieve(query)
         list_of_graphs = []
         rel = []
@@ -159,6 +165,7 @@ class Neo4jGraph:
             _graph = to_graph(rel, properties)
             _graph.Neo4jID = str(graph['g'].id)
             _graph.SubjectSpecializationOf = set(graph['g'].labels)
+            _graph.ScratchPad["CQL"] = query
             list_of_graphs.append(_graph)
         # self.graph = _graph
         #print(type(list_of_graphs))
@@ -167,9 +174,12 @@ class Neo4jGraph:
     def retrieve_by_AnyNameLabels(self, criteria, limit):
         list_of_graphs = []
         for crtr in criteria:
-            #print(crtr)
-            query = "match (g) where single(label in g.NameLabels WHERE label = '{0}') and g.nodetype='Graph' " \
-                    "return g  LIMIT {1}".format(crtr, limit)
+            if limit == -1:
+                query = "match (g) where single(label in g.NameLabels WHERE label = '{0}') and g.nodetype='Graph' " \
+                        "return g".format(crtr)
+            else:
+                query = "match (g) where single(label in g.NameLabels WHERE label = '{0}') and g.nodetype='Graph' " \
+                        "return g  LIMIT {1}".format(crtr, limit)
 
             #print(query)
             response = self.db.retrieve(query)
@@ -191,6 +201,7 @@ class Neo4jGraph:
                 _graph = to_graph(rel, properties)
                 _graph.Neo4jID = str(graph['g'].id)
                 _graph.SubjectSpecializationOf = set(graph['g'].labels)
+                _graph.ScratchPad["CQL"] = query
                 list_of_graphs.append(_graph)
             # self.graph = _graph
         #print(type(list_of_graphs))
@@ -199,10 +210,12 @@ class Neo4jGraph:
     def retrieve_by_Types(self, criteria, limit):
         list_of_graphs = []
         for crtr in criteria:
-            #print(crtr)
-            query = "match (g) where single(label in g.Type WHERE label = '{0}') and g.nodetype='Graph' return g  " \
-                    "LIMIT {1}".format(crtr,
-                                       limit)
+            if limit == -1:
+                query = "match (g) where single(label in g.Type WHERE label = '{0}') and g.nodetype='Graph' return g  ".format(crtr)
+            else:
+                query = "match (g) where single(label in g.Type WHERE label = '{0}') and g.nodetype='Graph' return g  " \
+                        "LIMIT {1}".format(crtr,
+                                           limit)
             #print(query)
             response = self.db.retrieve(query)
             #print(response)
@@ -223,17 +236,22 @@ class Neo4jGraph:
                 _graph = to_graph(rel, properties)
                 _graph.Neo4jID = str(graph['g'].id)
                 _graph.SubjectSpecializationOf = set(graph['g'].labels)
+                _graph.ScratchPad["CQL"] = query
                 list_of_graphs.append(_graph)
             # self.graph = _graph
         #print(type(list_of_graphs))
         return list_of_graphs
 
     def retrieve_by_TypeAndSpecialization(self, typecriteria, specializationcriteria, limit):
-        # q = "match (g:{0}) where single(label in g.Type WHERE d = '{1}') LIMIT {2} return g".format(specializationcriteria,typecriteriacriteria, limit)
-        query = "match (g:{0}".format(specializationcriteria)
-        query += ") where single(label in g.Type WHERE label = '{0}') and g.nodetype='Graph' return g  LIMIT {1}".format(
-            typecriteria,
-            limit)
+        if limit == -1:
+            query = "match (g:{0}".format(specializationcriteria)
+            query += ") where single(label in g.Type WHERE label = '{0}') and g.nodetype='Graph' return g".format(
+                typecriteria)
+        else:
+            query = "match (g:{0}".format(specializationcriteria)
+            query += ") where single(label in g.Type WHERE label = '{0}') and g.nodetype='Graph' return g  LIMIT {1}".format(
+                typecriteria,
+                limit)
         response = self.db.retrieve(query)
         list_of_graphs = []
         rel = []
@@ -252,6 +270,7 @@ class Neo4jGraph:
             _graph = to_graph(rel, properties)
             _graph.Neo4jID = str(graph['g'].id)
             _graph.SubjectSpecializationOf = set(graph['g'].labels)
+            _graph.ScratchPad["CQL"] = query
             list_of_graphs.append(_graph)
         # self.graph = _graph
         #print(type(list_of_graphs))

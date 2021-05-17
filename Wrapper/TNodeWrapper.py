@@ -107,16 +107,26 @@ class Neo4jNode:
         return "match (n) where ID(n)={0} detach delete n return 1".format(n_id)
 
     def retrieve_node_queryId(self, n_id):
-        return "match (n) where ID(n)={0} return n".format(n_id)
+        return "match (n) where ID(n)={0} and n. return n".format(n_id)
 
     def retrieve_node_by_AnySubjectSpecializationOf(self, criteria, limit):
-        return "match (n:{0}) return n limit {1}".format(criteria, limit)
+        if limit==-1:
+            return "match (n:{0}) where n.nodetype='Node' return n".format(criteria)
+        else:
+            return "match (n:{0}) where n.nodetype='Node' return n limit {1}".format(criteria, limit)
 
     def retrieve_node_by_AnyNameLabels(self, criteria, limit):
-        return "match (n) where single(label in n.NameLabels WHERE label = '{0}')  return n LIMIT {1}".format(criteria, limit)
+        if limit==-1:
+            return "match (n) where single(label in n.NameLabels WHERE label = '{0}') and n.nodetype='Node'  return n".format(criteria)
+        else:
+            return "match (n) where single(label in n.NameLabels WHERE label = '{0}') and n.nodetype='Node' return n LIMIT {1}".format(criteria, limit)
 
     def retrieve_node_by_UniqueListOfAllSpecializationLabels(self, limit):
-        return "match (n) return DISTINCT labels(n) limit {0}".format(limit)
+        #print(type(limit))
+        if limit==-1:
+            return "match (n) where n.nodetype='Node' return DISTINCT labels(n)"
+        else:
+            return "match (n) where n.nodetype='Node' return DISTINCT labels(n) limit {0}".format(limit)
 
     def update_node_query(self, n_id):
         query = "MATCH (n) where ID(n)=" + n_id + " SET "
@@ -190,15 +200,20 @@ class Neo4jNode:
         query = self.retrieve_node_queryId(n_id)
         response = self.db.retrieve(query)
         node=to_tnode(response[0]['n'])
+        Tnode = to_tnode(node['n'])
+        Tnode.ScratchPad["CQL"] = query
         #print(node)
-        return node
+        return Tnode
 
     def retrieve_by_AnySubjectSpecializationOf(self, criteria, limit):
         query = self.retrieve_node_by_AnySubjectSpecializationOf(criteria, limit)
         response = self.db.retrieve(query)
         list_of_nodes = []
         for node in response:
-            list_of_nodes += [to_tnode(node['n'])]
+            Tnode = to_tnode(node['n'])
+            Tnode.ScratchPad["CQL"] = query
+            Tnode = [Tnode]
+            list_of_nodes += Tnode
         #print(list_of_nodes)
         return list_of_nodes
 
@@ -207,7 +222,10 @@ class Neo4jNode:
         response = self.db.retrieve(query)
         list_of_nodes = []
         for node in response:
-            list_of_nodes += [to_tnode(node['n'])]
+            Tnode = to_tnode(node['n'])
+            Tnode.ScratchPad["CQL"] = query
+            Tnode = [Tnode]
+            list_of_nodes += Tnode
         #print(list_of_nodes)
         return list_of_nodes
 
@@ -215,18 +233,25 @@ class Neo4jNode:
         query = self.retrieve_node_by_UniqueListOfAllSpecializationLabels(limit)
         response = self.db.retrieve(query)
         list_of_SpecializationLabels = []
-        #print(response)
+        uniquelist=[]
         for node in response:
-            list_of_SpecializationLabels += node
+            for n in node[0]:
+                list_of_SpecializationLabels.append(n)
+        for node in list_of_SpecializationLabels:
+            if node not in uniquelist:
+                uniquelist.append(node)
         #print(list_of_SpecializationLabels)
-        return list_of_SpecializationLabels[0]
+        return uniquelist
 
     def retrieve_nodes(self, query):
         #query = "match (n) return n"
         nodes = self.db.retrieve(query)
         list_of_nodes = []
         for node in nodes:
-            list_of_nodes += [to_tnode(node['n'])]
+            Tnode= to_tnode(node['n'])
+            Tnode.ScratchPad["CQL"]=query
+            Tnode=[Tnode]
+            list_of_nodes +=Tnode
         #print(list_of_nodes)
         return list_of_nodes
 

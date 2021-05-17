@@ -4,9 +4,10 @@ import os
 from genpy.niha_thrift.ttypes import *
 
 def load_config():
-    path = os.getcwd()
-
-    with open(r"C:\Users\User\Desktop\thrift_server_test\thrift_server_test\Functions\config.json") as json_data_file:
+    # path = os.getcwd()
+    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+    CONFIG_PATH = os.path.join(ROOT_DIR, 'config.json')
+    with open(CONFIG_PATH) as json_data_file:
         data = json.load(json_data_file)
     conf = data["neo4j"]
     scheme = conf["scheme"]
@@ -17,10 +18,9 @@ def load_config():
     url = "{scheme}://{host_name}:{port}".format(scheme=scheme, host_name=host, port=port)
     return url, user, password
 
-
 def to_relation(_id, source, target, _relation, rel_properties):
-    relation = TRelation()
-    relation.SubjectSpecializationOf = set(rel_properties['SubjectSpecializationOf'])
+    relation = TRelation(GraphID=set(),AoKID=set(),SubjectSpecializationOf=[],NameLabels=set())
+    relation.SubjectSpecializationOf = list(rel_properties['SubjectSpecializationOf'])
     relation.Neo4jID = str(_id)
     relation.NameLabels=set(rel_properties['NameLabels'])
     relation.AoKID = set(rel_properties['AoKID'])
@@ -60,7 +60,7 @@ def to_relation(_id, source, target, _relation, rel_properties):
 
 
 def to_graph(response, gproperties):
-    graph = TGraph()
+    graph = TGraph(GraphID="",AoKID=set(),SubjectSpecializationOf=[], NameLabels=set())
     _nodes = dict()
     _edges = dict()
     #print(gproperties)
@@ -101,10 +101,12 @@ def to_graph(response, gproperties):
 
 
 def to_tnode(_node):
-    node = TNode()
+    TS = TESystemLevelType.STRING
+    TA = TEAbstractionLevel.INSTANCE_NODE
+    node = TNode(SubjectSpecializationOf=[],GraphID=set(),AoKID=set(),NameLabels=set(), SystemLevelType=TS,AbstractionLevel=TA)
     properties = dict(_node)
     #print(properties)
-    node.SubjectSpecializationOf = set(_node.labels)
+    node.SubjectSpecializationOf = list(_node.labels)
     node.Neo4jID = str(_node.id)
     node.AoKID = set(properties['AoKID'])
     node.GraphID=set(properties['GraphID'])

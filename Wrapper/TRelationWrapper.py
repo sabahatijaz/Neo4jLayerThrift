@@ -295,15 +295,24 @@ class Neo4jRelation:
         return "match (s)-[r]-(t) where ID(r)={0} return s,r,t".format(r_id)
 
     def retrieve_query_GraphId(self, r_id, limit):
-        return "match (s)-[r]-(t) where single(gid in r.GraphID WHERE gid = '{0}') return s,r,t limit {1}".format(r_id,
+        if limit==-1:
+            return "match (s)-[r]-(t) where single(gid in r.GraphID WHERE gid = '{0}') return s,r,t".format(r_id)
+        else:
+            return "match (s)-[r]-(t) where single(gid in r.GraphID WHERE gid = '{0}') return s,r,t limit {1}".format(r_id,
                                                                                                                   limit)
 
     def retrieve_query_NameLabel(self, criteria, limit):
-        return "match (s)-[r]-(t) where single(namelabel in r.NameLabels WHERE namelabel = '{0}') return s,r,t limit {1}".format(
-            criteria, limit)
+        if limit==-1:
+            return "match (s)-[r]-(t) where single(namelabel in r.NameLabels WHERE namelabel = '{0}') return s,r,t".format(criteria)
+        else:
+            return "match (s)-[r]-(t) where single(namelabel in r.NameLabels WHERE namelabel = '{0}') return s,r,t limit {1}".format(
+                criteria, limit)
 
     def retrieve_query_UniqueListOfAllSpecializationLabels(self, limit):
-        return "match (s)-[r]-(t) return DISTINCT r.SubjectSpecializationOf limit {0}".format(limit)
+        if limit==-1:
+            return "match (s)-[r]-(t) return DISTINCT r.SubjectSpecializationOf"
+        else:
+            return "match (s)-[r]-(t) return DISTINCT r.SubjectSpecializationOf limit {0}".format(limit)
 
     def delete_relation_query(self, r_id):
         return "match ()-[r]-() where ID(r)={0} delete r".format(r_id)
@@ -330,6 +339,7 @@ class Neo4jRelation:
             _type = node['r'].type
             properties = dict(node['r'])
             relation = to_relation(_id, source_node, target_node, _type, properties)
+            relation.ScratchPad["CQL"] = query
         return relation
 
     def retrieve_relation_by_Graphid(self, r_id, limit):
@@ -346,6 +356,7 @@ class Neo4jRelation:
                 # print(_type)
                 properties = dict(node['r'])
                 relation = to_relation(_id, source_node, target_node, _type, properties)
+                relation.ScratchPad["CQL"] = query
                 list_of_relations.append(relation)
         # print(type(list_of_relations[0]))
         # print(list_of_relations[0])
@@ -365,6 +376,7 @@ class Neo4jRelation:
                 _type = node['r'].type
                 properties = dict(node['r'])
                 relation = to_relation(_id, source_node, target_node, _type, properties)
+                relation.ScratchPad["CQL"] = query
                 list_of_relations.append(relation)
         # print(type(list_of_relations))
         return list_of_relations
@@ -373,11 +385,15 @@ class Neo4jRelation:
         query = self.retrieve_query_UniqueListOfAllSpecializationLabels(limit)
         response = self.db.retrieve(query)
         list_of_SpecializationLabels = []
-        # print(response)
+        uniquelist = []
         for node in response:
-            list_of_SpecializationLabels += node
-        # print(type(list_of_SpecializationLabels))
-        return list_of_SpecializationLabels[0]
+            for n in node[0]:
+                list_of_SpecializationLabels.append(n)
+        for node in list_of_SpecializationLabels:
+            if node not in uniquelist:
+                uniquelist.append(node)
+        # print(list_of_SpecializationLabels)
+        return uniquelist
 
     def retrieve_relation(self):
         query = "match (s)-[r]-(t) return s,r,t"
@@ -389,7 +405,9 @@ class Neo4jRelation:
             _id = node['r'].id
             _type = node['r'].type
             properties = dict(node['r'])
-            relation += [to_relation(_id, source_node, target_node, _type, properties)]
+            rel=to_relation(_id, source_node, target_node, _type, properties)
+            rel.ScratchPad["CQL"] = query
+            relation += [rel]
         return relation
 
     def delete_relation(self, r_id):
